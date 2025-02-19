@@ -8,8 +8,6 @@ from datetime import datetime
 
 IPServidor = "localhost"
 puertoServidor = 9096
-# IPServidor = "148.213.116.151"
-# puertoServidor = 8000
 
 # Se declara e inicializa el socket del cliente
 try:
@@ -19,6 +17,9 @@ try:
 except ConnectionRefusedError:
     print("Error: No se pudo conectar al servidor. Asegúrate de que está encendido.")
     sys.exit()
+
+usuario_interno = None
+usuario_externo = None
 
 def recibir_mensajes():
     """Función que se ejecuta en un hilo separado para recibir mensajes del servidor."""
@@ -33,36 +34,45 @@ def recibir_mensajes():
                 break
             chat_text.config(state=tk.NORMAL)
             fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            chat_text.insert(tk.END, f"({socketCliente.getsockname()[0]} - {fecha_creacion}): {respuesta}\n")
+            chat_text.insert(tk.END, f"({usuario_externo if usuario_externo else socketCliente.getsockname()} - {fecha_creacion}): {respuesta}\n")
             chat_text.config(state=tk.DISABLED)
         except Exception as e:
             print(f"Error al recibir mensaje: {e}")
             socketCliente.close()
             break
 
-def enviar_archivo(nombre_archivo):
-    """Envía una solicitud para enviar un archivo al servidor y espera confirmación."""
-    if not os.path.exists(nombre_archivo):
-        messagebox.showerror("Error", "El archivo no existe.")
-        return
+def abrir_ventana_registro():
+    """Abre una nueva ventana para el registro de usuarios."""
+    ventana_registro = tk.Toplevel(root)
+    ventana_registro.title("Registro de Usuario")
 
-    # Solicitar permiso para enviar el archivo
-    socketCliente.send(f"ENVIAR_ARCHIVO {nombre_archivo}".encode())
+    tk.Label(ventana_registro, text="Correo:").grid(row=0, column=0, padx=5, pady=5)
+    correo_entry = tk.Entry(ventana_registro)
+    correo_entry.grid(row=0, column=1, padx=5, pady=5)
 
-    # Esperar respuesta del servidor
-    respuesta = socketCliente.recv(4096).decode()
+    tk.Label(ventana_registro, text="Usuario:").grid(row=1, column=0, padx=5, pady=5)
+    usuario_entry = tk.Entry(ventana_registro)
+    usuario_entry.grid(row=1, column=1, padx=5, pady=5)
 
-    if respuesta == "ACEPTADO":
-        with open(nombre_archivo, "rb") as archivo:
-            while True:
-                datos = archivo.read(4096)
-                if not datos:
-                    break
-                socketCliente.send(datos)
-        socketCliente.send(b"FIN_ARCHIVO")
-        messagebox.showinfo("Éxito", f"Archivo {nombre_archivo} enviado correctamente.")
-    else:
-        messagebox.showerror("Error", f"El servidor rechazó el archivo {nombre_archivo}.")
+    tk.Label(ventana_registro, text="Contraseña:").grid(row=2, column=0, padx=5, pady=5)
+    password_entry = tk.Entry(ventana_registro, show="*")
+    password_entry.grid(row=2, column=1, padx=5, pady=5)
+
+    def registrar_usuario():
+        global usuario_interno
+        correo = correo_entry.get()
+        usuario_interno = usuario_entry.get()
+        password = password_entry.get()
+        if correo and usuario_interno and password:
+            registro_info = f"REGISTRO {correo} {usuario_interno} {password}"
+            socketCliente.send(registro_info.encode())
+            messagebox.showinfo("Registro", "Registro enviado al servidor.")
+            ventana_registro.destroy()
+        else:
+            messagebox.showwarning("Registro", "Todos los campos son obligatorios.")
+
+    boton_registrar = tk.Button(ventana_registro, text="Registrar", command=registrar_usuario)
+    boton_registrar.grid(row=3, columnspan=2, pady=10)
 
 def enviar_mensaje():
     mensaje = mensaje_entry.get()
@@ -70,21 +80,16 @@ def enviar_mensaje():
         socketCliente.send(mensaje.encode())
         chat_text.config(state=tk.NORMAL)
         fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        chat_text.insert(tk.END, f"({socketCliente.getsockname()[0]} - {fecha_creacion}): {mensaje}\n")
+        chat_text.insert(tk.END, f"({usuario_interno if usuario_interno else socketCliente.getsockname()} - {fecha_creacion}): {mensaje}\n")
         chat_text.config(state=tk.DISABLED)
         mensaje_entry.delete(0, tk.END)
         if mensaje.lower() in ['adios', 'bye']:
             socketCliente.close()
             root.quit()
 
-def seleccionar_archivo():
-    nombre_archivo = filedialog.askopenfilename()
-    if nombre_archivo:
-        enviar_archivo(nombre_archivo)
-
 # Configuración de la interfaz gráfica
 root = tk.Tk()
-root.title("Cliente de Chat")
+root.title("Chatubedo")
 
 chat_text = scrolledtext.ScrolledText(root, state=tk.DISABLED, wrap=tk.WORD)
 chat_text.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
@@ -95,8 +100,8 @@ mensaje_entry.pack(padx=10, pady=5, fill=tk.X, expand=True)
 boton_enviar = tk.Button(root, text="Enviar", command=enviar_mensaje)
 boton_enviar.pack(padx=10, pady=5, side=tk.LEFT)
 
-boton_archivo = tk.Button(root, text="Enviar Archivo", command=seleccionar_archivo)
-boton_archivo.pack(padx=10, pady=5, side=tk.RIGHT)
+boton_registrar = tk.Button(root, text="Registrar", command=abrir_ventana_registro)
+boton_registrar.pack(padx=10, pady=5, side=tk.RIGHT)
 
 # Iniciar el hilo que se encargará de recibir mensajes del servidor
 hilo_recibir = threading.Thread(target=recibir_mensajes, daemon=True)

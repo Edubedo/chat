@@ -48,10 +48,9 @@ def manejar_cliente(socketConexion, addr):
     # Enviar todos los mensajes almacenados en la base de datos al cliente
     mensajes = obtener_mensajes_de_db()
     for mensaje in mensajes:
-        print("mensaje: ", mensaje)
         try:
             contenido, sk_user, fecha_creacion = mensaje
-            socketConexion.send(f"({sk_user} - {fecha_creacion}): {contenido} \n".encode())
+            socketConexion.send(f"({sk_user} - {fecha_creacion}): {contenido}\n".encode())
         except OSError:
             print(f"Error al enviar historial a {addr}")
             socketConexion.close()
@@ -63,6 +62,12 @@ def manejar_cliente(socketConexion, addr):
             if not mensajeRecibido:
                 break  # El cliente cerró la conexión
             print(f"Mensaje recibido de {addr}: {mensajeRecibido}")
+
+            if mensajeRecibido.startswith("REGISTRO"):
+                _, correo, usuario, password = mensajeRecibido.split(maxsplit=3)
+                registrar_usuario(correo, usuario, password)
+                socketConexion.send("Registro exitoso".encode())
+                continue
 
             # Guardar el mensaje en la base de datos
             guardar_mensaje_en_db(addr, mensajeRecibido)
@@ -103,6 +108,30 @@ def manejar_cliente(socketConexion, addr):
             except ValueError:
                 pass
             break
+
+def registrar_usuario(correo, usuario, password):
+    """Registra un nuevo usuario en la base de datos."""
+    try:
+        connection = psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            port=os.getenv("DB_PORT")
+        )
+        cursor = connection.cursor()
+        query = """
+        INSERT INTO users (sk_user, s_correo, sk_password, s_usuario)
+        VALUES (%s, %s, %s, %s)
+        """
+        sk_user = uuid.uuid4()
+        cursor.execute(query, (str(sk_user), correo, password, usuario))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        print(f"Usuario {usuario} registrado exitosamente.")
+    except Exception as error:
+        print(f"Error al registrar el usuario: {error}")
 
 def operator_input():
     """
@@ -196,7 +225,6 @@ def recibir_archivo(socketConexion, nombre_archivo):
                 break
             archivo.write(datos)
     print(f"Archivo {nombre_archivo} recibido correctamente.")
-
 
 def connectDatabase():
     try:
