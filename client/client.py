@@ -6,8 +6,8 @@ import tkinter as tk
 from tkinter import filedialog, scrolledtext, messagebox
 from datetime import datetime
 
-IPServidor = "localhost"
-puertoServidor = 9096
+IPServidor = "https://chat-udc-836b85f21ae2.herokuapp.com/"
+puertoServidor = 80
 
 # Se declara e inicializa el socket del cliente
 try:
