@@ -42,6 +42,43 @@ def obtener_mensajes_de_db():
         print(f"Error al obtener mensajes de la base de datos: {error}")
         return []
 
+def registrar_usuario(socketConexion, correo, usuario, password):
+    """Registra un nuevo usuario en la base de datos."""
+    try:
+        connection = psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            port=os.getenv("DB_PORT")
+        )
+        cursor = connection.cursor()
+
+        # Verificar que el correo ya exista en la base de datos
+        cursor.execute("SELECT * FROM users WHERE s_correo = %s", (correo,))
+        resultado = cursor.fetchone()
+        if resultado:
+            socketConexion.send("Error: El correo ya está registrado.".encode())
+            cursor.close()
+            connection.close()
+            return
+
+        # Insertar el nuevo usuario en la base de datos
+        query = """
+        INSERT INTO users (sk_user, s_correo, sk_password, s_usuario)
+        VALUES (%s, %s, %s, %s)
+        """
+        sk_user = uuid.uuid4()
+        cursor.execute(query, (str(sk_user), correo, password, usuario))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        socketConexion.send("Registro exitoso".encode())
+        print(f"Usuario {usuario} registrado exitosamente.")
+    except Exception as error:
+        print(f"Error al registrar el usuario: {error}")
+        socketConexion.send(f"Error al registrar el usuario: {error}".encode())
+
 def manejar_cliente(socketConexion, addr):
     print(f"Cliente conectado desde {addr}")
     
@@ -65,8 +102,7 @@ def manejar_cliente(socketConexion, addr):
 
             if mensajeRecibido.startswith("REGISTRO"):
                 _, correo, usuario, password = mensajeRecibido.split(maxsplit=3)
-                registrar_usuario(correo, usuario, password)
-                socketConexion.send("Registro exitoso".encode())
+                registrar_usuario(socketConexion, correo, usuario, password)
                 continue
 
             # Guardar el mensaje en la base de datos
@@ -108,30 +144,6 @@ def manejar_cliente(socketConexion, addr):
             except ValueError:
                 pass
             break
-
-def registrar_usuario(correo, usuario, password):
-    """Registra un nuevo usuario en la base de datos."""
-    try:
-        connection = psycopg2.connect(
-            host=os.getenv("DB_HOST"),
-            database=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            port=os.getenv("DB_PORT")
-        )
-        cursor = connection.cursor()
-        query = """
-        INSERT INTO users (sk_user, s_correo, sk_password, s_usuario)
-        VALUES (%s, %s, %s, %s)
-        """
-        sk_user = uuid.uuid4()
-        cursor.execute(query, (str(sk_user), correo, password, usuario))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        print(f"Usuario {usuario} registrado exitosamente.")
-    except Exception as error:
-        print(f"Error al registrar el usuario: {error}")
 
 def operator_input():
     """
