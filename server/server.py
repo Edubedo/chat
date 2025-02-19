@@ -16,7 +16,6 @@ puertoServidor = int(os.getenv("SERVER_PORT"))
 socketServidor = socket(AF_INET, SOCK_STREAM)
 socketServidor.bind((direccionServidor, puertoServidor))
 socketServidor.listen()
-print(f"Servidor escuchando en {direccionServidor}:{puertoServidor}")
 
 clientes = []                      # Lista para guardar los clientes conectados
 cola_mensajes = queue.Queue()      # Cola FIFO para los mensajes recibidos de clientes
@@ -150,7 +149,7 @@ def connectDatabase():
             password=os.getenv("DB_PASSWORD"),
             port=os.getenv("DB_PORT")
         )
-        print("Conexión a la base de datos PostgreSQL exitosa")
+        print("Conexión establecida")
     except Exception as error:
         print(f"Error al conectar a la base de datos: {error}")
 
