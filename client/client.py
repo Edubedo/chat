@@ -62,7 +62,7 @@ def abrir_ventana_registro():
     """Abre una nueva ventana para el registro de usuarios."""
     ventana_registro = tk.Toplevel(root)
     ventana_registro.title("Registro de Usuario")
-    ventana_registro.geometry("600x300")
+    ventana_registro.geometry("350x150")
 
     # Centrar la ventana en la pantalla windows
     ventana_registro.update_idletasks()
@@ -73,29 +73,36 @@ def abrir_ventana_registro():
     ventana_registro.geometry(f"{ancho_ventana}x{alto_ventana}+{x}+{y}")
 
     tk.Label(ventana_registro, text="Correo:").grid(row=0, column=0, padx=5, pady=5)
-    correo_entry = tk.Entry(ventana_registro)
+    correo_entry = tk.Entry(ventana_registro, width=40)
     correo_entry.grid(row=0, column=1, padx=5, pady=5)
 
     tk.Label(ventana_registro, text="Usuario:").grid(row=1, column=0, padx=5, pady=5)
-    usuario_entry = tk.Entry(ventana_registro)
+    usuario_entry = tk.Entry(ventana_registro, width=40)
     usuario_entry.grid(row=1, column=1, padx=5, pady=5)
 
     tk.Label(ventana_registro, text="Contraseña:").grid(row=2, column=0, padx=5, pady=5)
-    password_entry = tk.Entry(ventana_registro, show="*")
+    password_entry = tk.Entry(ventana_registro, width=40, show="*")
     password_entry.grid(row=2, column=1, padx=5, pady=5)
 
     def registrar_usuario():
         global usuario_interno
+        #  Obtenemos los valores que ingreso el usuario en los campos
         correo = correo_entry.get()
         usuario_interno = usuario_entry.get()
         password = password_entry.get()
         if correo and usuario_interno and password:
             registro_info = f"REGISTRO {correo} {usuario_interno} {password}"
+
+            # Enviamos un mensaje al servidor con la información del registro
             socketCliente.send(registro_info.encode())
+
+            # La venta de registro se cierra
             ventana_registro.destroy()
         else:
+            # Sí no ingresa todo lso campos le decimos que tienen que ingresar todos los campos
             messagebox.showwarning("Registro", "Todos los campos son obligatorios.")
 
+    # Cuando le da click a registrar se ejecuta la función registrar_usuario
     boton_registrar = tk.Button(ventana_registro, text="Registrar", command=registrar_usuario)
     boton_registrar.grid(row=3, columnspan=2, pady=10)
 
@@ -103,14 +110,16 @@ def abrir_ventana_login():
     """Abre una nueva ventana para el inicio de sesión."""
     ventana_login = tk.Toplevel(root)
     ventana_login.title("Inicio de Sesión")
-    ventana_login.geometry("600x300")
+    ventana_login.geometry("350x150")
 
     tk.Label(ventana_login, text="Correo:").grid(row=0, column=0, padx=5, pady=5)
-    correo_entry = tk.Entry(ventana_login)
+    correo_entry = tk.Entry(ventana_login, width=40)
     correo_entry.grid(row=0, column=1, padx=5, pady=5)
+    correo_entry.focus()
+
 
     tk.Label(ventana_login, text="Contraseña:").grid(row=1, column=0, padx=5, pady=5)
-    password_entry = tk.Entry(ventana_login, show="*")
+    password_entry = tk.Entry(ventana_login, width=40, show="*")
     password_entry.grid(row=1, column=1, padx=5, pady=5)
 
     def iniciar_sesion():
@@ -167,10 +176,10 @@ boton_enviar = tk.Button(root, text="Enviar", command=enviar_mensaje)
 boton_enviar.pack(padx=10, pady=5, side=tk.LEFT)
 
 boton_registrar = tk.Button(root, text="Registrar", command=abrir_ventana_registro)
-boton_registrar.pack(padx=10, pady=5, side=tk.TOP)
+boton_registrar.pack(padx=10, pady=5, side=tk.RIGHT)
 
 boton_login = tk.Button(root, text="Iniciar Sesión", command=abrir_ventana_login)
-boton_login.pack(padx=10, pady=5, side=tk.TOP)
+boton_login.pack(padx=10, pady=5, side=tk.RIGHT)
 
 # Iniciar el hilo que se encargará de recibir mensajes del servidor
 hilo_recibir = threading.Thread(target=recibir_mensajes, daemon=True)

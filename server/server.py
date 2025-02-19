@@ -296,10 +296,16 @@ hilo_operator.start()
 
 connectDatabase()
 
+# Mientras el servidor se encuentre activo
 while servidor_activo:
     try:
+        # Aceptamos las peticios del cliente
         socketConexion, addr = socketServidor.accept()
+
+        # Guardamos en una peticion la conexion y la direccion del cliente
         clientes.append((socketConexion, addr))
+
+        
         hilo_cliente = threading.Thread(target=manejar_cliente, args=(socketConexion, addr))
         hilo_cliente.start()
     except OSError:
