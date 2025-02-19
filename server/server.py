@@ -21,8 +21,35 @@ clientes = []                      # Lista para guardar los clientes conectados
 cola_mensajes = queue.Queue()      # Cola FIFO para los mensajes recibidos de clientes
 servidor_activo = True             # Bandera para saber si el servidor sigue activo
 
+def obtener_mensajes_de_db():
+    """Obtiene todos los mensajes almacenados en la base de datos."""
+    try:
+        connection = psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            port=os.getenv("DB_PORT")
+        )
+        cursor = connection.cursor()
+        query = "SELECT s_content FROM messages ORDER BY d_fecha_creacion"
+        cursor.execute(query)
+        mensajes = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return [mensaje[0] for mensaje in mensajes]
+    except Exception as error:
+        print(f"Error al obtener mensajes de la base de datos: {error}")
+        return []
+
 def manejar_cliente(socketConexion, addr):
     print(f"Cliente conectado desde {addr}")
+    
+    # Enviar todos los mensajes almacenados en la base de datos al cliente
+    mensajes = obtener_mensajes_de_db()
+    for mensaje in mensajes:
+        socketConexion.send(f"Historial: {mensaje}\n".encode())
+    
     while True:
         try:
             mensajeRecibido = socketConexion.recv(4096).decode()
@@ -49,6 +76,11 @@ def manejar_cliente(socketConexion, addr):
                     pass
                 break
 
+            # Reenviar el mensaje a todos los clientes conectados
+            for cliente, _ in clientes:
+                if cliente != socketConexion:
+                    cliente.send(f"{addr}: {mensajeRecibido}".encode())
+
             # Agregar el mensaje a la cola para que el operador lo responda
             cola_mensajes.put((socketConexion, addr, mensajeRecibido))
         except ConnectionResetError:
@@ -59,7 +91,7 @@ def manejar_cliente(socketConexion, addr):
             except ValueError:
                 pass
             break
-
+           
 def guardar_mensaje_en_db(addr, mensaje):
     """Guarda el mensaje recibido en la base de datos."""
     try:

@@ -29,7 +29,7 @@ def recibir_mensajes():
                 socketCliente.close()
                 break
             chat_text.config(state=tk.NORMAL)
-            chat_text.insert(tk.END, f"Servidor: {respuesta}\n")
+            chat_text.insert(tk.END, f"{respuesta}\n")
             chat_text.config(state=tk.DISABLED)
         except Exception as e:
             print(f"Error al recibir mensaje: {e}")
