@@ -4,6 +4,7 @@ import os
 import threading
 import tkinter as tk
 from tkinter import filedialog, scrolledtext, messagebox
+from datetime import datetime
 
 IPServidor = "localhost"
 puertoServidor = 9096
@@ -65,7 +66,8 @@ def enviar_mensaje():
     if mensaje:
         socketCliente.send(mensaje.encode())
         chat_text.config(state=tk.NORMAL)
-        chat_text.insert(tk.END, f"Tú: {mensaje}\n")
+        fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        chat_text.insert(tk.END, f"({socketCliente.getsockname()[0]} - {fecha_creacion}): {mensaje}\n")
         chat_text.config(state=tk.DISABLED)
         mensaje_entry.delete(0, tk.END)
         if mensaje.lower() in ['adios', 'bye']:

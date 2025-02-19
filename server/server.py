@@ -32,12 +32,12 @@ def obtener_mensajes_de_db():
             port=os.getenv("DB_PORT")
         )
         cursor = connection.cursor()
-        query = "SELECT s_content FROM messages ORDER BY d_fecha_creacion"
+        query = "SELECT s_content, sk_user, d_fecha_creacion FROM messages ORDER BY d_fecha_creacion"
         cursor.execute(query)
         mensajes = cursor.fetchall()
         cursor.close()
         connection.close()
-        return [mensaje[0] for mensaje in mensajes]
+        return mensajes
     except Exception as error:
         print(f"Error al obtener mensajes de la base de datos: {error}")
         return []
@@ -48,10 +48,17 @@ def manejar_cliente(socketConexion, addr):
     # Enviar todos los mensajes almacenados en la base de datos al cliente
     mensajes = obtener_mensajes_de_db()
     for mensaje in mensajes:
-        socketConexion.send(f"Historial: {mensaje}\n".encode())
+        print("mensaje: ", mensaje)
+        try:
+            contenido, sk_user, fecha_creacion = mensaje
+            socketConexion.send(f"({sk_user} - {fecha_creacion}): {contenido} \n".encode())
+        except OSError:
+            print(f"Error al enviar historial a {addr}")
+            socketConexion.close()
+            return
     
     while True:
-        try:
+        try:    
             mensajeRecibido = socketConexion.recv(4096).decode()
             if not mensajeRecibido:
                 break  # El cliente cerró la conexión
@@ -79,7 +86,12 @@ def manejar_cliente(socketConexion, addr):
             # Reenviar el mensaje a todos los clientes conectados
             for cliente, _ in clientes:
                 if cliente != socketConexion:
-                    cliente.send(f"{addr}: {mensajeRecibido}".encode())
+                    try:
+                        cliente.send(f"{addr}: {mensajeRecibido}".encode())
+                    except OSError:
+                        print(f"Error al reenviar mensaje a {cliente.getpeername()}")
+                        cliente.close()
+                        clientes.remove((cliente, _))
 
             # Agregar el mensaje a la cola para que el operador lo responda
             cola_mensajes.put((socketConexion, addr, mensajeRecibido))
@@ -91,7 +103,54 @@ def manejar_cliente(socketConexion, addr):
             except ValueError:
                 pass
             break
-           
+
+def operator_input():
+    """
+    Esta función corre en un hilo independiente y permite al operador
+    escribir comandos en cualquier momento, incluso si no hay mensajes pendientes.
+    Si se escribe 'adios' o 'bye', se cierra el servidor.
+    Si hay un mensaje pendiente, se usa el texto escrito como respuesta.
+    """
+    global servidor_activo
+    while servidor_activo:
+        try:
+            comando = input("Servidor: ")
+            if comando.lower() in ['adios', 'bye']:
+                print("Cerrando servidor...")
+                servidor_activo = False
+                cerrar_servidor()
+                break
+            # Si hay mensajes pendientes, enviar la respuesta al primer mensaje de la cola
+            if not cola_mensajes.empty():
+                socketConexion, addr, mensajeRecibido = cola_mensajes.get()
+                try:
+                    socketConexion.send(comando.encode())
+                except OSError:
+                    print(f"Error al enviar respuesta a {addr}")
+                    socketConexion.close()
+                    try:
+                        clientes.remove((socketConexion, addr))
+                    except ValueError:
+                        pass
+            else:
+                print("No hay mensajes pendientes para responder.")
+        except EOFError:
+            print("Entrada estándar cerrada. Cerrando servidor...")
+            servidor_activo = False
+            cerrar_servidor()
+            break
+        
+def cerrar_servidor():
+    """Cierra todas las conexiones y finaliza el programa del servidor."""
+    print("Desconectando todos los clientes...")
+    for cliente, _ in clientes:
+        try:
+            cliente.close()
+        except:
+            pass
+    socketServidor.close()
+    os._exit(0)
+
 def guardar_mensaje_en_db(addr, mensaje):
     """Guarda el mensaje recibido en la base de datos."""
     try:
@@ -110,8 +169,7 @@ def guardar_mensaje_en_db(addr, mensaje):
         # Generar un UUID para sk_message
         sk_message = uuid.uuid4()
         # Convertir la dirección IP a un UUID
-        user_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, addr[0])
-        cursor.execute(query, (str(sk_message), mensaje, str(user_uuid)))
+        cursor.execute(query, (str(sk_message), mensaje, str(addr[0])))
         connection.commit()
         cursor.close()
         connection.close()
@@ -139,38 +197,6 @@ def recibir_archivo(socketConexion, nombre_archivo):
             archivo.write(datos)
     print(f"Archivo {nombre_archivo} recibido correctamente.")
 
-def operator_input():
-    """
-    Esta función corre en un hilo independiente y permite al operador
-    escribir comandos en cualquier momento, incluso si no hay mensajes pendientes.
-    Si se escribe 'adios' o 'bye', se cierra el servidor.
-    Si hay un mensaje pendiente, se usa el texto escrito como respuesta.
-    """
-    global servidor_activo
-    while servidor_activo:
-        comando = input("Servidor: ")
-        if comando.lower() in ['adios', 'bye']:
-            print("Cerrando servidor...")
-            servidor_activo = False
-            cerrar_servidor()
-            break
-        # Si hay mensajes pendientes, enviar la respuesta al primer mensaje de la cola
-        if not cola_mensajes.empty():
-            socketConexion, addr, mensajeRecibido = cola_mensajes.get()
-            socketConexion.send(comando.encode())
-        else:
-            print("No hay mensajes pendientes para responder.")
-
-def cerrar_servidor():
-    """Cierra todas las conexiones y finaliza el programa del servidor."""
-    print("Desconectando todos los clientes...")
-    for cliente, _ in clientes:
-        try:
-            cliente.close()
-        except:
-            pass
-    socketServidor.close()
-    os._exit(0)  
 
 def connectDatabase():
     try:
