@@ -25,12 +25,15 @@ def recibir_mensajes():
     while True:
         try:
             respuesta = socketCliente.recv(4096).decode()
+            print("respuesta: ", respuesta)
+
             if not respuesta:
                 print("El servidor cerró la conexión.")
                 socketCliente.close()
                 break
             chat_text.config(state=tk.NORMAL)
-            chat_text.insert(tk.END, f"{respuesta}\n")
+            fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            chat_text.insert(tk.END, f"({socketCliente.getsockname()[0]} - {fecha_creacion}): {respuesta}\n")
             chat_text.config(state=tk.DISABLED)
         except Exception as e:
             print(f"Error al recibir mensaje: {e}")

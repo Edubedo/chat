@@ -87,7 +87,7 @@ def manejar_cliente(socketConexion, addr):
             for cliente, _ in clientes:
                 if cliente != socketConexion:
                     try:
-                        cliente.send(f"{addr}: {mensajeRecibido}".encode())
+                        cliente.send(f"{mensajeRecibido}".encode()) # Enviar el mensaje recibido al cliente
                     except OSError:
                         print(f"Error al reenviar mensaje a {cliente.getpeername()}")
                         cliente.close()
