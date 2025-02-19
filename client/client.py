@@ -32,7 +32,6 @@ def recibir_mensajes():
     while socket_abierto:
         try:
             respuesta = socketCliente.recv(4096).decode()
-            print("respuesta: ", respuesta)
 
             if not respuesta:
                 print("El servidor cerró la conexión.")
@@ -40,7 +39,7 @@ def recibir_mensajes():
                 socket_abierto = False
                 break
 
-            if respuesta.startswith("Error:") or "exitoso" in respuesta:
+            if respuesta.startswith("Error:") or "exitoso" in respuesta: # Manejamos los errores
                 if "Bienvenido" in respuesta:
                     usuario_interno = respuesta.split()[-1]
                 messagebox.showinfo("Información", respuesta)
@@ -52,6 +51,7 @@ def recibir_mensajes():
                 else:
                     chat_text.insert(tk.END, f"({fecha_creacion} - {respuesta}\n") # Estamos importando el usuario para resolver un error de sesión
                 chat_text.config(state=tk.DISABLED)
+
         except Exception as e:
             print(f"Error al recibir mensaje: {e}")
             socketCliente.close()
@@ -64,7 +64,7 @@ def abrir_ventana_registro():
     ventana_registro.title("Registro de Usuario")
     ventana_registro.geometry("600x300")
 
-    # Centrar la ventana en la pantalla
+    # Centrar la ventana en la pantalla windows
     ventana_registro.update_idletasks()
     ancho_ventana = ventana_registro.winfo_width()
     alto_ventana = ventana_registro.winfo_height()
@@ -103,6 +103,7 @@ def abrir_ventana_login():
     """Abre una nueva ventana para el inicio de sesión."""
     ventana_login = tk.Toplevel(root)
     ventana_login.title("Inicio de Sesión")
+    ventana_login.geometry("600x300")
 
     tk.Label(ventana_login, text="Correo:").grid(row=0, column=0, padx=5, pady=5)
     correo_entry = tk.Entry(ventana_login)
@@ -114,7 +115,7 @@ def abrir_ventana_login():
 
     def iniciar_sesion():
         global usuario_interno
-        correo = correo_entry.get()
+        correo = correo_entry.get() 
         password = password_entry.get()
         if correo and password:
             login_info = f"LOGIN {correo} {password}"
@@ -147,7 +148,9 @@ def enviar_mensaje():
 
 # Configuración de la interfaz gráfica
 root = tk.Tk()
-root.title("Chatubedo 1.0")
+root.title("Chatubedo 1.1")
+# Show the active users
+
 root.geometry("800x600")
 # Agregar icono
 icon_path = os.path.join(os.path.dirname(__file__), "assets", "logo.ico")
@@ -164,10 +167,10 @@ boton_enviar = tk.Button(root, text="Enviar", command=enviar_mensaje)
 boton_enviar.pack(padx=10, pady=5, side=tk.LEFT)
 
 boton_registrar = tk.Button(root, text="Registrar", command=abrir_ventana_registro)
-boton_registrar.pack(padx=10, pady=5, side=tk.RIGHT)
+boton_registrar.pack(padx=10, pady=5, side=tk.TOP)
 
 boton_login = tk.Button(root, text="Iniciar Sesión", command=abrir_ventana_login)
-boton_login.pack(padx=10, pady=5, side=tk.RIGHT)
+boton_login.pack(padx=10, pady=5, side=tk.TOP)
 
 # Iniciar el hilo que se encargará de recibir mensajes del servidor
 hilo_recibir = threading.Thread(target=recibir_mensajes, daemon=True)

@@ -17,6 +17,9 @@ socketServidor = socket(AF_INET, SOCK_STREAM)
 socketServidor.bind((direccionServidor, puertoServidor))
 socketServidor.listen()
 
+# Contador de usuarios activos
+usuarios_activos = 0
+
 clientes = []                      # Lista para guardar los clientes conectados
 cola_mensajes = queue.Queue()      # Cola FIFO para los mensajes recibidos de clientes
 servidor_activo = True             # Bandera para saber si el servidor sigue activo
@@ -112,6 +115,10 @@ def iniciar_sesion(socketConexion, correo, password):
 
 def manejar_cliente(socketConexion, addr):
     print(f"Cliente conectado desde {addr}")
+    global usuarios_activos
+    usuarios_activos += 1
+
+    print("CURRENT USERS: ", usuarios_activos)
     
     # Enviar todos los mensajes almacenados en la base de datos al cliente
     mensajes = obtener_mensajes_de_db()
@@ -170,6 +177,8 @@ def manejar_cliente(socketConexion, addr):
             cola_mensajes.put((socketConexion, addr, mensajeRecibido))
         except ConnectionResetError:
             print(f"Cliente {addr} se desconectó del servidor.")
+            usuarios_activos -= 1
+            print("CURRENT USERS: ", usuarios_activos)
             socketConexion.close()
             try:
                 clientes.remove((socketConexion, addr))
