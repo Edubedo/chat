@@ -2,15 +2,17 @@ from socket import *
 import sys
 import os
 import threading
-import tkinter as tk
+import tkinter as tk  # Tkinter es la librería gráfica de Python que permite crear interfaces de usuario de escritorio
 from tkinter import filedialog, scrolledtext, messagebox
-from datetime import datetime
+from datetime import datetime # Importamos la librería datetime para obtener la fecha y hora actual
 
 IPServidor = "localhost"
 puertoServidor = 9096
 
 # Se declara e inicializa el socket del cliente
 try:
+    # AF_INET: Protocolo de direcciones IP
+    # SOCK_STREAM: Protocolo de comunicación TCP
     socketCliente = socket(AF_INET, SOCK_STREAM)
     socketCliente.connect((IPServidor, puertoServidor))
     print(f"Conectado al servidor {IPServidor}:{puertoServidor}")
@@ -18,8 +20,10 @@ except ConnectionRefusedError:
     print("Error: No se pudo conectar al servidor. Asegúrate de que está encendido.")
     sys.exit()
 
+# Manejo de los usuarios, tanto el que esta escribiendo como los demas conectados
 usuario_interno = None
 usuario_externo = None
+
 socket_abierto = True
 
 def recibir_mensajes():
@@ -58,6 +62,15 @@ def abrir_ventana_registro():
     """Abre una nueva ventana para el registro de usuarios."""
     ventana_registro = tk.Toplevel(root)
     ventana_registro.title("Registro de Usuario")
+    ventana_registro.geometry("600x300")
+
+    # Centrar la ventana en la pantalla
+    ventana_registro.update_idletasks()
+    ancho_ventana = ventana_registro.winfo_width()
+    alto_ventana = ventana_registro.winfo_height()
+    x = (ventana_registro.winfo_screenwidth() // 2) - (ancho_ventana // 2)
+    y = (ventana_registro.winfo_screenheight() // 2) - (alto_ventana // 2)
+    ventana_registro.geometry(f"{ancho_ventana}x{alto_ventana}+{x}+{y}")
 
     tk.Label(ventana_registro, text="Correo:").grid(row=0, column=0, padx=5, pady=5)
     correo_entry = tk.Entry(ventana_registro)
@@ -134,7 +147,12 @@ def enviar_mensaje():
 
 # Configuración de la interfaz gráfica
 root = tk.Tk()
-root.title("Chatubedo")
+root.title("Chatubedo 1.0")
+root.geometry("800x600")
+# Agregar icono
+icon_path = os.path.join(os.path.dirname(__file__), "assets", "logo.ico")
+root.iconbitmap(icon_path)
+
 
 chat_text = scrolledtext.ScrolledText(root, state=tk.DISABLED, wrap=tk.WORD)
 chat_text.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
