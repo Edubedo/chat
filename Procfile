@@ -1,1 +1,1 @@
-web: python --bind 0.0.0.0 server.py
+web: python server.py
