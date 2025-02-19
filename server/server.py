@@ -79,6 +79,37 @@ def registrar_usuario(socketConexion, correo, usuario, password):
         print(f"Error al registrar el usuario: {error}")
         socketConexion.send(f"Error al registrar el usuario: {error}".encode())
 
+def iniciar_sesion(socketConexion, correo, password):
+    """Valida el correo y la contraseña del usuario y devuelve el nombre de usuario."""
+    try:
+        connection = psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            port=os.getenv("DB_PORT")
+        )
+        cursor = connection.cursor()
+
+        # Verificar el correo y la contraseña en la base de datos
+        cursor.execute("SELECT s_usuario FROM users WHERE s_correo = %s AND sk_password = %s", (correo, password))
+        resultado = cursor.fetchone()
+        if resultado:
+            usuario = resultado[0]
+            socketConexion.send(f"Inicio de sesión exitoso. Bienvenido {usuario}".encode())
+            print(f"Usuario {usuario} inició sesión exitosamente.")
+            return usuario
+        else:
+            socketConexion.send("Error: Correo o contraseña incorrectos.".encode())
+            return None
+        
+        cursor.close()
+        connection.close()
+    except Exception as error:
+        print(f"Error al iniciar sesión: {error}")
+        socketConexion.send(f"Error al iniciar sesión: {error}".encode())
+        return None
+
 def manejar_cliente(socketConexion, addr):
     print(f"Cliente conectado desde {addr}")
     
@@ -93,6 +124,8 @@ def manejar_cliente(socketConexion, addr):
             socketConexion.close()
             return
     
+    usuario = None  # Inicializar la variable usuario
+
     while True:
         try:    
             mensajeRecibido = socketConexion.recv(4096).decode()
@@ -105,14 +138,13 @@ def manejar_cliente(socketConexion, addr):
                 registrar_usuario(socketConexion, correo, usuario, password)
                 continue
 
-            # Guardar el mensaje en la base de datos
-            guardar_mensaje_en_db(addr, mensajeRecibido)
+            if mensajeRecibido.startswith("LOGIN"):
+                _, correo, password = mensajeRecibido.split(maxsplit=2)
+                usuario = iniciar_sesion(socketConexion, correo, password)
+                continue
 
-            # Si el cliente quiere enviar un archivo
-            if mensajeRecibido.startswith("ENVIAR_ARCHIVO"):
-                _, nombre_archivo = mensajeRecibido.split(maxsplit=1)
-                confirmar_envio(socketConexion, nombre_archivo)
-                continue  # Espera nuevos mensajes
+            # Guardar el mensaje en la base de datos
+            guardar_mensaje_en_db(addr, mensajeRecibido, usuario if usuario else addr[0])
 
             # Si el cliente dice "adios" o "bye", se desconecta
             if mensajeRecibido.lower() in ['adios', 'bye']:
@@ -128,7 +160,7 @@ def manejar_cliente(socketConexion, addr):
             for cliente, _ in clientes:
                 if cliente != socketConexion:
                     try:
-                        cliente.send(f"{mensajeRecibido}".encode()) # Enviar el mensaje recibido al cliente
+                        cliente.send(f"{usuario if usuario else addr[0]}: {mensajeRecibido}".encode()) # Enviar el mensaje recibido al cliente
                     except OSError:
                         print(f"Error al reenviar mensaje a {cliente.getpeername()}")
                         cliente.close()
@@ -137,7 +169,7 @@ def manejar_cliente(socketConexion, addr):
             # Agregar el mensaje a la cola para que el operador lo responda
             cola_mensajes.put((socketConexion, addr, mensajeRecibido))
         except ConnectionResetError:
-            print(f"Cliente {addr} se desconectó abruptamente.")
+            print(f"Cliente {addr} se desconectó del servidor.")
             socketConexion.close()
             try:
                 clientes.remove((socketConexion, addr))
@@ -192,7 +224,7 @@ def cerrar_servidor():
     socketServidor.close()
     os._exit(0)
 
-def guardar_mensaje_en_db(addr, mensaje):
+def guardar_mensaje_en_db(addr, mensaje, usuario):
     """Guarda el mensaje recibido en la base de datos."""
     try:
         connection = psycopg2.connect(
@@ -204,13 +236,12 @@ def guardar_mensaje_en_db(addr, mensaje):
         )
         cursor = connection.cursor()
         query = """
-        INSERT INTO messages (sk_message, s_content, d_fecha_creacion, sk_user)
-        VALUES (%s, %s, NOW(), %s)
+        INSERT INTO messages (sk_message, s_content, d_fecha_creacion, sk_user, s_address)
+        VALUES (%s, %s, NOW(), %s, %s)
         """
         # Generar un UUID para sk_message
         sk_message = uuid.uuid4()
-        # Convertir la dirección IP a un UUID
-        cursor.execute(query, (str(sk_message), mensaje, str(addr[0])))
+        cursor.execute(query, (str(sk_message), mensaje, usuario, str(addr[0])))
         connection.commit()
         cursor.close()
         connection.close()
