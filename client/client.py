@@ -44,9 +44,9 @@ def recibir_mensajes():
                 chat_text.config(state=tk.NORMAL)
                 fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 if respuesta.startswith(f"{usuario_interno}:"):
-                    chat_text.insert(tk.END, f"{fecha_creacion} - {usuario_interno}: {respuesta[len(usuario_interno)+2:]}\n")
+                    chat_text.insert(tk.END, f"({fecha_creacion} - {usuario_interno}): {respuesta[len(usuario_interno)+2:]}\n")
                 else:
-                    chat_text.insert(tk.END, f"{fecha_creacion} - {respuesta}\n") # Estamos importando el usuario para resolver un error de sesión
+                    chat_text.insert(tk.END, f"({fecha_creacion} - {respuesta}\n") # Estamos importando el usuario para resolver un error de sesión
                 chat_text.config(state=tk.DISABLED)
         except Exception as e:
             print(f"Error al recibir mensaje: {e}")
