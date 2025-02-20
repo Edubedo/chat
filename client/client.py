@@ -6,7 +6,7 @@ import tkinter as tk  # Tkinter es la librería gráfica de Python que permite c
 from tkinter import filedialog, scrolledtext, messagebox
 from datetime import datetime # Importamos la librería datetime para obtener la fecha y hora actual
 
-IPServidor = "localhost"
+IPServidor = '192.168.5.31'
 puertoServidor = 9096
 
 # Se declara e inicializa el socket del cliente
@@ -50,6 +50,7 @@ def recibir_mensajes():
                     chat_text.insert(tk.END, f"({fecha_creacion} - {usuario_interno}): {respuesta[len(usuario_interno)+2:]}\n")
                 else:
                     chat_text.insert(tk.END, f"({fecha_creacion} - {respuesta}\n") # Estamos importando el usuario para resolver un error de sesión
+                chat_text.see(tk.END)  # Desplazar el área de texto hasta el final
                 chat_text.config(state=tk.DISABLED)
 
         except Exception as e:
@@ -62,7 +63,7 @@ def abrir_ventana_registro():
     """Abre una nueva ventana para el registro de usuarios."""
     ventana_registro = tk.Toplevel(root)
     ventana_registro.title("Registro de Usuario")
-    ventana_registro.geometry("350x150")
+    ventana_registro.geometry("300x150")
 
     # Centrar la ventana en la pantalla windows
     ventana_registro.update_idletasks()
@@ -110,7 +111,7 @@ def abrir_ventana_login():
     """Abre una nueva ventana para el inicio de sesión."""
     ventana_login = tk.Toplevel(root)
     ventana_login.title("Inicio de Sesión")
-    ventana_login.geometry("350x150")
+    ventana_login.geometry("300x150")
 
     tk.Label(ventana_login, text="Correo:").grid(row=0, column=0, padx=5, pady=5)
     correo_entry = tk.Entry(ventana_login, width=40)
@@ -133,7 +134,7 @@ def abrir_ventana_login():
         else:
             messagebox.showwarning("Inicio de Sesión", "Todos los campos son obligatorios.")
 
-    boton_login = tk.Button(ventana_login, text="Iniciar Sesión", command=iniciar_sesion)
+    boton_login = tk.Button(ventana_login, text="Acceder", command=iniciar_sesion)
     boton_login.grid(row=2, columnspan=2, pady=10)
 
 def enviar_mensaje():
@@ -145,6 +146,7 @@ def enviar_mensaje():
             chat_text.config(state=tk.NORMAL)
             fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             chat_text.insert(tk.END, f"({usuario_interno if usuario_interno else socketCliente.getsockname()} - {fecha_creacion}): {mensaje}\n")
+            chat_text.see(tk.END)  # Desplazar el área de texto hasta el final
             chat_text.config(state=tk.DISABLED)
             mensaje_entry.delete(0, tk.END)
             if mensaje.lower() in ['adios', 'bye']:
@@ -162,8 +164,8 @@ root.title("Chatubedo 1.1")
 
 root.geometry("800x600")
 # Agregar icono
-icon_path = os.path.join(os.path.dirname(__file__), "assets", "logo.ico")
-root.iconbitmap(icon_path)
+#icon_path = os.path.join(os.path.dirname(__file__), "logo.ico")
+#root.iconbitmap(icon_path)
 
 
 chat_text = scrolledtext.ScrolledText(root, state=tk.DISABLED, wrap=tk.WORD)
@@ -172,8 +174,12 @@ chat_text.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 mensaje_entry = tk.Entry(root)
 mensaje_entry.pack(padx=10, pady=5, fill=tk.X, expand=True)
 
+# Manejar que tambien se pueda enviar el mensaje si le da click al boton enter
 boton_enviar = tk.Button(root, text="Enviar", command=enviar_mensaje)
 boton_enviar.pack(padx=10, pady=5, side=tk.LEFT)
+
+# Enviar mensaje al presionar Enter
+root.bind('<Return>', lambda event: enviar_mensaje()) # El mensaje tambien se envia cuando le da click a enter
 
 boton_registrar = tk.Button(root, text="Registrar", command=abrir_ventana_registro)
 boton_registrar.pack(padx=10, pady=5, side=tk.RIGHT)
