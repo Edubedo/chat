@@ -6,8 +6,8 @@ import tkinter as tk  # Tkinter es la librería gráfica de Python que permite c
 from tkinter import filedialog, scrolledtext, messagebox
 from datetime import datetime # Importamos la librería datetime para obtener la fecha y hora actual
 
-IPServidor = '44.226.145.213'
-puertoServidor = 8000
+IPServidor = '192.168.5.31'
+puertoServidor = 9096
 
 # Se declara e inicializa el socket del cliente
 try:
@@ -146,7 +146,7 @@ def enviar_mensaje():
             socketCliente.send(mensaje.encode())
             chat_text.config(state=tk.NORMAL)
             fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            chat_text.insert(tk.END, f"({usuario_interno if usuario_interno else socketCliente.getsockname()} - {fecha_creacion}): {mensaje}\n")
+            chat_text.insert(tk.END, f"( {fecha_creacion} - {usuario_interno if usuario_interno else socketCliente.getsockname()}): {mensaje}\n")
             chat_text.see(tk.END)  # Desplazar el área de texto hasta el final
             chat_text.config(state=tk.DISABLED)
             mensaje_entry.delete(0, tk.END)

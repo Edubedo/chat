@@ -10,15 +10,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 direccionServidor = os.getenv("SERVER_HOST", "0.0.0.0")
-try:
-    puertoServidor = int(os.getenv("PORT", 9096))
-except ValueError:
-    puertoServidor = 9000
-    
+puertoServidor = int(os.getenv("PORT", 9096))
+
 # Crear el socket del servidor y ponerlo a escuchar
-socketServidor = socket(AF_INET, SOCK_STREAM)
-socketServidor.bind((direccionServidor, puertoServidor))
-socketServidor.listen()
+try:
+    # Crear el socket del servidor y ponerlo a escuchar
+    socketServidor = socket(AF_INET, SOCK_STREAM)
+    socketServidor.bind((direccionServidor, puertoServidor)) # Enlazar el socket a la dirección y puerto especificados
+    socketServidor.listen()
+    print(f"Servidor escuchando en {direccionServidor}:{puertoServidor}")
+except Exception as e:
+    print(f"Error al iniciar el servidor: {e}")
+    os._exit(1)
 
 # Contador de usuarios activos
 usuarios_activos = 0
@@ -224,7 +227,8 @@ def operator_input():
             servidor_activo = False
             cerrar_servidor()
             break
-        
+
+     
 def cerrar_servidor():
     """Cierra todas las conexiones y finaliza el programa del servidor."""
     print("Desconectando todos los clientes...")
