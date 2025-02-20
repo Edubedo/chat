@@ -64,6 +64,7 @@ def abrir_ventana_registro():
     ventana_registro = tk.Toplevel(root)
     ventana_registro.title("Registro de Usuario")
     ventana_registro.geometry("300x150")
+    ventana_registro.configure(bg='#2e2e2e')
 
     # Centrar la ventana en la pantalla windows
     ventana_registro.update_idletasks()
@@ -73,16 +74,16 @@ def abrir_ventana_registro():
     y = (ventana_registro.winfo_screenheight() // 2) - (alto_ventana // 2)
     ventana_registro.geometry(f"{ancho_ventana}x{alto_ventana}+{x}+{y}")
 
-    tk.Label(ventana_registro, text="Correo:").grid(row=0, column=0, padx=5, pady=5)
-    correo_entry = tk.Entry(ventana_registro, width=40)
+    tk.Label(ventana_registro, text="Correo:", bg='#2e2e2e', fg='white').grid(row=0, column=0, padx=5, pady=5)
+    correo_entry = tk.Entry(ventana_registro, width=40, bg='#3e3e3e', fg='white', insertbackground='white')
     correo_entry.grid(row=0, column=1, padx=5, pady=5)
 
-    tk.Label(ventana_registro, text="Usuario:").grid(row=1, column=0, padx=5, pady=5)
-    usuario_entry = tk.Entry(ventana_registro, width=40)
+    tk.Label(ventana_registro, text="Usuario:", bg='#2e2e2e', fg='white').grid(row=1, column=0, padx=5, pady=5)
+    usuario_entry = tk.Entry(ventana_registro, width=40, bg='#3e3e3e', fg='white', insertbackground='white')
     usuario_entry.grid(row=1, column=1, padx=5, pady=5)
 
-    tk.Label(ventana_registro, text="Contraseña:").grid(row=2, column=0, padx=5, pady=5)
-    password_entry = tk.Entry(ventana_registro, width=40, show="*")
+    tk.Label(ventana_registro, text="Contraseña:", bg='#2e2e2e', fg='white').grid(row=2, column=0, padx=5, pady=5)
+    password_entry = tk.Entry(ventana_registro, width=40, show="*", bg='#3e3e3e', fg='white', insertbackground='white')
     password_entry.grid(row=2, column=1, padx=5, pady=5)
 
     def registrar_usuario():
@@ -104,7 +105,7 @@ def abrir_ventana_registro():
             messagebox.showwarning("Registro", "Todos los campos son obligatorios.")
 
     # Cuando le da click a registrar se ejecuta la función registrar_usuario
-    boton_registrar = tk.Button(ventana_registro, text="Registrar", command=registrar_usuario)
+    boton_registrar = tk.Button(ventana_registro, text="Registrar", command=registrar_usuario, bg='#4e4e4e', fg='white')
     boton_registrar.grid(row=3, columnspan=2, pady=10)
 
 def abrir_ventana_login():
@@ -112,15 +113,15 @@ def abrir_ventana_login():
     ventana_login = tk.Toplevel(root)
     ventana_login.title("Inicio de Sesión")
     ventana_login.geometry("300x150")
+    ventana_login.configure(bg='#2e2e2e')
 
-    tk.Label(ventana_login, text="Correo:").grid(row=0, column=0, padx=5, pady=5)
-    correo_entry = tk.Entry(ventana_login, width=40)
+    tk.Label(ventana_login, text="Correo:", bg='#2e2e2e', fg='white').grid(row=0, column=0, padx=5, pady=5)
+    correo_entry = tk.Entry(ventana_login, width=40, bg='#3e3e3e', fg='white', insertbackground='white')
     correo_entry.grid(row=0, column=1, padx=5, pady=5)
     correo_entry.focus()
 
-
-    tk.Label(ventana_login, text="Contraseña:").grid(row=1, column=0, padx=5, pady=5)
-    password_entry = tk.Entry(ventana_login, width=40, show="*")
+    tk.Label(ventana_login, text="Contraseña:", bg='#2e2e2e', fg='white').grid(row=1, column=0, padx=5, pady=5)
+    password_entry = tk.Entry(ventana_login, width=40, show="*", bg='#3e3e3e', fg='white', insertbackground='white')
     password_entry.grid(row=1, column=1, padx=5, pady=5)
 
     def iniciar_sesion():
@@ -134,7 +135,7 @@ def abrir_ventana_login():
         else:
             messagebox.showwarning("Inicio de Sesión", "Todos los campos son obligatorios.")
 
-    boton_login = tk.Button(ventana_login, text="Acceder", command=iniciar_sesion)
+    boton_login = tk.Button(ventana_login, text="Acceder", command=iniciar_sesion, bg='#4e4e4e', fg='white')
     boton_login.grid(row=2, columnspan=2, pady=10)
 
 def enviar_mensaje():
@@ -159,32 +160,34 @@ def enviar_mensaje():
 
 # Configuración de la interfaz gráfica
 root = tk.Tk()
-root.title("Chatubedo 1.1")
-# Show the active users
+root.title("Chatubedo 1.2")
+root.configure(bg='#2e2e2e')
 
 root.geometry("800x600")
 # Agregar icono
 #icon_path = os.path.join(os.path.dirname(__file__), "logo.ico")
 #root.iconbitmap(icon_path)
 
-
-chat_text = scrolledtext.ScrolledText(root, state=tk.DISABLED, wrap=tk.WORD)
+chat_text = scrolledtext.ScrolledText(root, state=tk.DISABLED, wrap=tk.WORD, bg='#1e1e1e', fg='white', insertbackground='white')
 chat_text.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
-mensaje_entry = tk.Entry(root)
-mensaje_entry.pack(padx=10, pady=5, fill=tk.X, expand=True)
+frame_entry = tk.Frame(root, bg='#2e2e2e')
+frame_entry.pack(padx=10, pady=5, fill=tk.X, expand=True)
+
+mensaje_entry = tk.Entry(frame_entry, bg='#FFF', fg='black', insertbackground='white')
+mensaje_entry.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
 
 # Manejar que tambien se pueda enviar el mensaje si le da click al boton enter
-boton_enviar = tk.Button(root, text="Enviar", command=enviar_mensaje)
-boton_enviar.pack(padx=10, pady=5, side=tk.LEFT)
+boton_enviar = tk.Button(frame_entry, text="Enviar", command=enviar_mensaje, bg='#4e4e4e', fg='white')
+boton_enviar.pack(side=tk.RIGHT, padx=5, pady=5)
 
 # Enviar mensaje al presionar Enter
 root.bind('<Return>', lambda event: enviar_mensaje()) # El mensaje tambien se envia cuando le da click a enter
 
-boton_registrar = tk.Button(root, text="Registrar", command=abrir_ventana_registro)
+boton_registrar = tk.Button(root, text="Registrar", command=abrir_ventana_registro, bg='#4e4e4e', fg='white')
 boton_registrar.pack(padx=10, pady=5, side=tk.RIGHT)
 
-boton_login = tk.Button(root, text="Iniciar Sesión", command=abrir_ventana_login)
+boton_login = tk.Button(root, text="Iniciar Sesión", command=abrir_ventana_login, bg='#4e4e4e', fg='white')
 boton_login.pack(padx=10, pady=5, side=tk.RIGHT)
 
 # Iniciar el hilo que se encargará de recibir mensajes del servidor
