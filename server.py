@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
 
-direccionServidor = '192.168.5.31' #os.getenv("SERVER_HOST", "0.0.0.0")
-puertoServidor = 9096 #int(os.getenv("PORT", 9096))
+direccionServidor = os.getenv("SERVER_HOST", "0.0.0.0")
+puertoServidor = int(os.getenv("PORT", 9096))
 
 # Crear el socket del servidor y ponerlo a escuchar
 socketServidor = socket(AF_INET, SOCK_STREAM)
