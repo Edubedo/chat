@@ -10,8 +10,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 direccionServidor = os.getenv("SERVER_HOST", "0.0.0.0")
-puertoServidor = int(os.getenv("PORT", 9096))
-
+try:
+    puertoServidor = int(os.getenv("PORT", 9096))
+except ValueError:
+    puertoServidor = 9000
+    
 # Crear el socket del servidor y ponerlo a escuchar
 socketServidor = socket(AF_INET, SOCK_STREAM)
 socketServidor.bind((direccionServidor, puertoServidor))

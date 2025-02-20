@@ -6,8 +6,8 @@ import tkinter as tk  # Tkinter es la librería gráfica de Python que permite c
 from tkinter import filedialog, scrolledtext, messagebox
 from datetime import datetime # Importamos la librería datetime para obtener la fecha y hora actual
 
-IPServidor = 'localhost'
-puertoServidor = 9096
+IPServidor = '44.226.145.213'
+puertoServidor = 8000
 
 # Se declara e inicializa el socket del cliente
 try:
